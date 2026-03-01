@@ -1,0 +1,29 @@
+{
+  "name": "lensportfolio",
+  "version": "1.0.0",
+  "description": "Professional Photography Portfolio Platform",
+  "scripts": {
+    "install-all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "build": "cd frontend && npm run build",
+    "start-backend": "cd backend && npm start",
+    "start-frontend": "cd frontend && npm run preview",
+    "create-admin": "cd backend && node createAdmin.js",
+    "docker-up": "docker-compose up -d",
+    "docker-down": "docker-compose down"
+  },
+  "keywords": [
+    "photography",
+    "portfolio",
+    "mern",
+    "react",
+    "nodejs",
+    "mongodb",
+    "aws-s3"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

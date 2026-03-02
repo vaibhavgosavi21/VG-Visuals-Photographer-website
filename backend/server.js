@@ -29,6 +29,7 @@ app.use('/api/', limiter);
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/posts', require('./routes/posts'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/contact', require('./routes/contact'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'VG Visuals API' });

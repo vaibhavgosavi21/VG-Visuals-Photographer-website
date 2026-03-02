@@ -40,4 +40,11 @@ export const analyticsAPI = {
   track: () => api.post('/analytics/track'),
 };
 
+export const contactAPI = {
+  send: (data) => api.post('/contact', data),
+  getAll: () => api.get('/contact'),
+  markRead: (id) => api.put(`/contact/${id}/read`),
+  delete: (id) => api.delete(`/contact/${id}`),
+};
+
 export default api;

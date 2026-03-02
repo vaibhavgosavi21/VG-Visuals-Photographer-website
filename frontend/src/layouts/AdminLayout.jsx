@@ -1,10 +1,28 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { FiHome, FiUpload, FiSettings, FiLogOut, FiCamera, FiEye } from 'react-icons/fi';
+import { FiHome, FiUpload, FiSettings, FiLogOut, FiCamera, FiEye, FiMail } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import { contactAPI } from '../services/api';
 
 const AdminLayout = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadUnreadCount = async () => {
+    try {
+      const res = await contactAPI.getAll();
+      setUnreadCount(res.data.unreadCount);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -41,6 +59,20 @@ const AdminLayout = () => {
             >
               <FiSettings />
               <span>Manage Posts</span>
+            </Link>
+            <Link
+              to="/admin/messages"
+              className="flex items-center justify-between px-4 py-3 rounded-lg hover:bg-primary transition-colors"
+            >
+              <div className="flex items-center space-x-3">
+                <FiMail />
+                <span>Messages</span>
+              </div>
+              {unreadCount > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                  {unreadCount}
+                </span>
+              )}
             </Link>
             <Link
               to="/admin/preview"

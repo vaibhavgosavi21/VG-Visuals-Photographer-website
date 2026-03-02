@@ -1,19 +1,29 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiMail, FiPhone, FiMapPin, FiSend } from 'react-icons/fi';
+import { contactAPI } from '../services/api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+    setLoading(true);
+    setError('');
+    
+    try {
+      await contactAPI.send(formData);
+      setSubmitted(true);
       setFormData({ name: '', email: '', message: '' });
-    }, 3000);
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (err) {
+      setError('Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -113,11 +123,16 @@ const Contact = () => {
 
               <button
                 type="submit"
-                className="w-full bg-accent text-black py-3 rounded-lg font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center space-x-2"
+                disabled={loading}
+                className="w-full bg-accent text-black py-3 rounded-lg font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
               >
-                <span>Send Message</span>
+                <span>{loading ? 'Sending...' : 'Send Message'}</span>
                 <FiSend />
               </button>
+
+              {error && (
+                <p className="text-red-500 text-center mt-4">{error}</p>
+              )}
 
               {submitted && (
                 <motion.p

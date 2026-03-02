@@ -15,6 +15,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUpload from './pages/AdminUpload';
 import AdminManage from './pages/AdminManage';
+import AdminPreview from './pages/AdminPreview';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="upload" element={<AdminUpload />} />
             <Route path="manage" element={<AdminManage />} />
+            <Route path="preview" element={<AdminPreview />} />
           </Route>
         </Routes>
       </Router>

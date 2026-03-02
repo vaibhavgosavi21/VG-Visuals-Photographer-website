@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { FiArrowRight } from 'react-icons/fi';
+import { FiArrowRight, FiHeart, FiMessageCircle, FiShare2 } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
 import { postAPI, analyticsAPI } from '../services/api';
 
@@ -21,6 +21,23 @@ const Home = () => {
         setLoading(false);
       });
   }, []);
+
+  const handleLike = async (postId) => {
+    try {
+      const res = await postAPI.like(postId);
+      setFeaturedPosts(featuredPosts.map(p => 
+        p._id === postId ? { ...p, likes: res.data.likes } : p
+      ));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleShare = (postId) => {
+    const url = `${window.location.origin}/feed/${postId}`;
+    navigator.clipboard.writeText(url);
+    alert('Link copied to clipboard!');
+  };
 
   return (
     <div>
@@ -78,20 +95,45 @@ const Home = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
+                  className="bg-secondary rounded-lg overflow-hidden"
                 >
-                  <Link to={`/feed/${post._id}`} className="group block relative overflow-hidden rounded-lg aspect-square">
+                  <Link to={`/feed/${post._id}`} className="block relative overflow-hidden aspect-square">
                     <img
                       src={post.mediaUrl}
                       alt={post.caption}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-white font-semibold">{post.caption}</p>
-                        <p className="text-gray-300 text-sm">{post.category}</p>
+                  </Link>
+                  
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={() => handleLike(post._id)}
+                          className="flex items-center space-x-1 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <FiHeart className="text-xl" />
+                          <span className="text-sm">{post.likes}</span>
+                        </button>
+                        <Link
+                          to={`/feed/${post._id}`}
+                          className="flex items-center space-x-1 text-gray-400 hover:text-accent transition-colors"
+                        >
+                          <FiMessageCircle className="text-xl" />
+                        </Link>
+                        <button
+                          onClick={() => handleShare(post._id)}
+                          className="text-gray-400 hover:text-accent transition-colors"
+                        >
+                          <FiShare2 className="text-xl" />
+                        </button>
                       </div>
                     </div>
-                  </Link>
+                    <Link to={`/feed/${post._id}`}>
+                      <p className="text-white font-medium line-clamp-2 mb-1">{post.caption || 'Untitled'}</p>
+                      <p className="text-gray-400 text-sm">{post.category}</p>
+                    </Link>
+                  </div>
                 </motion.div>
               ))}
             </div>

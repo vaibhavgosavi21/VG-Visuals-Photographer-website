@@ -8,57 +8,81 @@ const AdminUpload = () => {
   const [formData, setFormData] = useState({
     caption: '',
     category: 'Nature',
-    tags: '',
-    mediaType: 'image'
+    tags: ''
   });
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
   const navigate = useNavigate();
 
   const categories = ['Nature', 'Street', 'Portrait', 'Wildlife', 'Travel', 'Architecture', 'Events', 'Other'];
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      // Check file size (10MB limit for Cloudinary free tier)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (selectedFile.size > maxSize) {
-        setError(`File too large! Maximum size is 10MB. Your file is ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB. Please compress or resize your image.`);
-        return;
-      }
-      
-      setError('');
-      setFile(selectedFile);
-      const mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-      setFormData({ ...formData, mediaType });
-      
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result);
-      reader.readAsDataURL(selectedFile);
+    const selectedFiles = Array.from(e.target.files);
+    
+    // Check file sizes (10MB limit for Cloudinary free tier)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const oversizedFiles = selectedFiles.filter(f => f.size > maxSize);
+    
+    if (oversizedFiles.length > 0) {
+      setError(`${oversizedFiles.length} file(s) too large! Maximum size is 10MB per file.`);
+      return;
     }
+    
+    setError('');
+    setFiles(selectedFiles);
+    
+    // Generate previews
+    const newPreviews = [];
+    selectedFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviews.push({
+          url: reader.result,
+          type: file.type.startsWith('image/') ? 'image' : 'video',
+          name: file.name
+        });
+        if (newPreviews.length === selectedFiles.length) {
+          setPreviews(newPreviews);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+    setPreviews(previews.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) {
-      setError('Please select a file');
+    if (files.length === 0) {
+      setError('Please select at least one file');
       return;
     }
 
     setUploading(true);
     setError('');
-
-    const data = new FormData();
-    data.append('media', file);
-    data.append('caption', formData.caption);
-    data.append('category', formData.category);
-    data.append('tags', formData.tags);
-    data.append('mediaType', formData.mediaType);
+    setUploadProgress(0);
 
     try {
-      await postAPI.create(data);
+      let uploaded = 0;
+      for (const file of files) {
+        const data = new FormData();
+        data.append('media', file);
+        data.append('caption', formData.caption);
+        data.append('category', formData.category);
+        data.append('tags', formData.tags);
+        data.append('mediaType', file.type.startsWith('image/') ? 'image' : 'video');
+
+        await postAPI.create(data);
+        uploaded++;
+        setUploadProgress(Math.round((uploaded / files.length) * 100));
+      }
+      
       navigate('/admin/manage');
     } catch (err) {
       console.error('Upload error:', err);
@@ -88,7 +112,7 @@ const AdminUpload = () => {
           )}
 
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Upload Media</label>
+            <label className="block text-sm font-medium mb-2">Upload Media (Multiple)</label>
             <div className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-accent transition-colors cursor-pointer">
               <input
                 type="file"
@@ -96,21 +120,36 @@ const AdminUpload = () => {
                 onChange={handleFileChange}
                 className="hidden"
                 id="file-upload"
+                multiple
               />
               <label htmlFor="file-upload" className="cursor-pointer">
-                {preview ? (
+                {previews.length > 0 ? (
                   <div className="mb-4">
-                    {formData.mediaType === 'image' ? (
-                      <img src={preview} alt="Preview" className="max-h-64 mx-auto rounded" />
-                    ) : (
-                      <video src={preview} controls className="max-h-64 mx-auto rounded" />
-                    )}
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {previews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          {preview.type === 'image' ? (
+                            <img src={preview.url} alt={`Preview ${index + 1}`} className="w-full h-32 object-cover rounded" />
+                          ) : (
+                            <video src={preview.url} className="w-full h-32 object-cover rounded" />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-accent mt-4">{files.length} file(s) selected</p>
                   </div>
                 ) : (
                   <div className="mb-4">
                     <FiUpload className="text-5xl text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-400">Click to upload or drag and drop</p>
-                    <p className="text-gray-500 text-sm mt-2">Images or Videos (Max 10MB for free tier)</p>
+                    <p className="text-gray-500 text-sm mt-2">Select multiple images or videos (Max 10MB each)</p>
                   </div>
                 )}
               </label>
@@ -160,11 +199,13 @@ const AdminUpload = () => {
             className="w-full bg-accent text-black py-3 rounded-lg font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             {uploading ? (
-              <span>Uploading...</span>
+              <>
+                <span>Uploading... {uploadProgress}%</span>
+              </>
             ) : (
               <>
                 <FiUpload />
-                <span>Upload Post</span>
+                <span>Upload {files.length > 0 ? `${files.length} Post(s)` : 'Posts'}</span>
               </>
             )}
           </button>

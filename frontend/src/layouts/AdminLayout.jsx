@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { FiHome, FiUpload, FiSettings, FiLogOut, FiCamera } from 'react-icons/fi';
+import { FiHome, FiUpload, FiSettings, FiLogOut, FiCamera, FiEye } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 const AdminLayout = () => {
@@ -42,6 +42,16 @@ const AdminLayout = () => {
               <FiSettings />
               <span>Manage Posts</span>
             </Link>
+            <Link
+              to="/admin/preview"
+              className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors text-accent"
+            >
+              <FiEye />
+              <span>Visitor Preview</span>
+            </Link>
+            
+            <div className="border-t border-gray-700 my-4"></div>
+            
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-primary transition-colors text-red-500"

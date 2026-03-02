@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { postAPI } from '../services/api';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiHeart, FiMessageCircle, FiShare2 } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 
 const Gallery = () => {
   const [posts, setPosts] = useState([]);
@@ -11,6 +12,24 @@ const Gallery = () => {
   const [loading, setLoading] = useState(true);
 
   const categories = ['All', 'Nature', 'Street', 'Portrait', 'Wildlife', 'Travel', 'Architecture', 'Events', 'Other'];
+
+  const handleLike = async (postId, e) => {
+    e.stopPropagation();
+    try {
+      const res = await postAPI.like(postId);
+      setPosts(posts.map(p => p._id === postId ? { ...p, likes: res.data.likes } : p));
+      setFilteredPosts(filteredPosts.map(p => p._id === postId ? { ...p, likes: res.data.likes } : p));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleShare = (postId, e) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/feed/${postId}`;
+    navigator.clipboard.writeText(url);
+    alert('Link copied to clipboard!');
+  };
 
   useEffect(() => {
     postAPI.getAll()
@@ -78,10 +97,12 @@ const Gallery = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.05 }}
-                className="mb-4 break-inside-avoid cursor-pointer group"
-                onClick={() => setSelectedPost(post)}
+                className="mb-4 break-inside-avoid bg-secondary rounded-lg overflow-hidden"
               >
-                <div className="relative overflow-hidden rounded-lg">
+                <div 
+                  className="relative overflow-hidden cursor-pointer group"
+                  onClick={() => setSelectedPost(post)}
+                >
                   <img
                     src={post.mediaUrl}
                     alt={post.caption}
@@ -90,6 +111,31 @@ const Gallery = () => {
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <p className="text-white font-semibold px-4 text-center">{post.caption}</p>
+                  </div>
+                </div>
+                
+                <div className="p-3">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={(e) => handleLike(post._id, e)}
+                      className="flex items-center space-x-1 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <FiHeart className="text-lg" />
+                      <span className="text-sm">{post.likes}</span>
+                    </button>
+                    <Link
+                      to={`/feed/${post._id}`}
+                      className="text-gray-400 hover:text-accent transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <FiMessageCircle className="text-lg" />
+                    </Link>
+                    <button
+                      onClick={(e) => handleShare(post._id, e)}
+                      className="text-gray-400 hover:text-accent transition-colors"
+                    >
+                      <FiShare2 className="text-lg" />
+                    </button>
                   </div>
                 </div>
               </motion.div>
